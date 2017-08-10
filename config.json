@@ -1,0 +1,99 @@
+{
+	"models": [
+		"Apple iPhone 7 32Gb",
+		"Apple iPhone 7 128Gb",
+		"Apple iPhone 7 256Gb",
+		"Apple iPhone 7 Plus 32Gb",
+		"Apple iPhone 7 Plus 128Gb",
+		"Apple iPhone 7 Plus 256Gb",
+		"Apple iPhone 6s 32Gb",
+		"Apple iPhone 6s 128Gb",
+		"Apple iPhone 6s Plus 32Gb",
+		"Apple iPhone 6s Plus 128Gb",
+		"Apple iPhone SE 32Gb",
+		"Apple iPhone SE 128Gb"
+	],
+
+	"companies": [
+		{
+			"title": "Связной",
+			"selector": "meta[itemprop='price']",
+			"attr": "content",
+			"color": "DEDDFF",
+			"links": [
+				"https://www.svyaznoy.ru/catalog/phone/224/3278474",
+				"https://www.svyaznoy.ru/catalog/phone/224/3279629",
+				"https://www.svyaznoy.ru/catalog/phone/224/3279635",
+				"https://www.svyaznoy.ru/catalog/phone/224/3278477",
+				"https://www.svyaznoy.ru/catalog/phone/224/3279665",
+				"https://www.svyaznoy.ru/catalog/phone/224/3279668",
+				"https://www.svyaznoy.ru/catalog/phone/224/3288560",
+				"https://www.svyaznoy.ru/catalog/phone/224/2752232",
+				"https://www.svyaznoy.ru/catalog/phone/224/3358466",
+				"https://www.svyaznoy.ru/catalog/phone/224/2752319",
+				"https://www.svyaznoy.ru/catalog/phone/224/3599633",
+				"https://www.svyaznoy.ru/catalog/phone/224/3599636"
+			]
+		},
+			{
+			"title": "Megafon",
+			"selector": ".b-info-goods__bottom input[name='goodPriceMain']",
+			"attr": "value",
+			"color": "B0F59C",
+			"links": [
+				"http://moscow.shop.megafon.ru/mobile/93672.html",
+				"http://moscow.shop.megafon.ru/mobile/93683.html",
+				"http://moscow.shop.megafon.ru/mobile/93685.html",
+				"http://moscow.shop.megafon.ru/mobile/93674.html",
+				"http://moscow.shop.megafon.ru/mobile/93704.html",
+				"http://moscow.shop.megafon.ru/mobile/93694.html",
+				"http://moscow.shop.megafon.ru/mobile/93917.html",
+				"http://moscow.shop.megafon.ru/mobile/89754.html",
+				"http://moscow.shop.megafon.ru/mobile/94336.html",
+				"http://moscow.shop.megafon.ru/mobile/89766.html",
+				"http://moscow.shop.megafon.ru/mobile/97547.html",
+				""
+			]
+		},
+		{
+			"title": "DNS",
+			"selector": ".item-order-price .price meta[itemprop='price']",
+			"attr": "content",
+			"color": "FFDCBF",
+			"links": [
+				"https://www.dns-shop.ru/product/5e40b75a758b3330",
+				"https://www.dns-shop.ru/product/5e40b756758b3330",
+				"https://www.dns-shop.ru/product/5e40b75f758b3330",
+				"https://www.dns-shop.ru/product/5e40b765758b3330",
+				"https://www.dns-shop.ru/product/5e40b76b758b3330",
+				"https://www.dns-shop.ru/product/5e40b76c758b3330",
+				"https://www.dns-shop.ru/product/39088fb67bc13330",
+				"https://www.dns-shop.ru/product/7bf62aa865963361",
+				"https://www.dns-shop.ru/product/3ef17fda8ba13330",
+				"",
+				"https://www.dns-shop.ru/product/c587b4910f7d3330",
+				"https://www.dns-shop.ru/product/c587b4940f7d3330"
+			]
+		},
+		{
+			"title": "М.Видео",
+			"selector": "meta[itemprop='price']",
+			"attr": "content",
+			"color": "FFBFC6",
+			"links": [
+				"http://www.mvideo.ru/products/30026135",
+				"http://www.mvideo.ru/products/30026139",
+				"http://www.mvideo.ru/products/30026214",
+				"http://www.mvideo.ru/products/30026229",
+				"http://www.mvideo.ru/products/30026219",
+				"http://www.mvideo.ru/products/30026224",
+				"http://www.mvideo.ru/products/30026285",
+				"http://www.mvideo.ru/products/30023520",
+				"http://www.mvideo.ru/products/30026289",
+				"http://www.mvideo.ru/products/30023534",
+				"http://www.mvideo.ru/products/30027843",
+				"http://www.mvideo.ru/products/30027844"
+			]
+		}
+	]
+}
