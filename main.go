@@ -56,23 +56,27 @@ func (c *Company) Parse(m []string) {
 	c.Wg.Add(len(c.Links))
 
 	for key, link := range c.Links {
-
 		go func(c *Company, link string, key int) {
+			repeats := 30
 			for {
 				if link != "" {
+					if repeats < 1 {
+						break
+					}
+					log.Println(c.Title, m[key], " - осталось попыток: ", repeats)
+					repeats--
 					if doc, err := goquery.NewDocument(link); err == nil {
 						if price := doc.Find(c.Selector).AttrOr(c.Attr, ""); price != "" {
 							c.Price[key], _ = strconv.Atoi(price)
 							fmt.Println(c.Title, m[key], price)
-							c.Wg.Done()
 							break
 						}
 					}
 				} else {
-					c.Wg.Done()
 					break
 				}
 			}
+			c.Wg.Done()
 		}(c, link, key)
 
 	}

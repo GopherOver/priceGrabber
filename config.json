@@ -1,5 +1,11 @@
 {
 	"models": [
+		"Apple iPhone X 64Gb",
+		"Apple iPhone X 256Gb",
+		"Apple iPhone 8 64Gb",
+		"Apple iPhone 8 256Gb",
+		"Apple iPhone 8 Plus 64Gb",
+		"Apple iPhone 8 Plus 256Gb",
 		"Apple iPhone 7 32Gb",
 		"Apple iPhone 7 128Gb",
 		"Apple iPhone 7 256Gb",
@@ -21,6 +27,12 @@
 			"attr": "content",
 			"color": "DEDDFF",
 			"links": [
+				"https://www.svyaznoy.ru/catalog/phone/224/3808979",
+				"https://www.svyaznoy.ru/catalog/phone/224/3809015",
+				"https://www.svyaznoy.ru/catalog/phone/224/3808991",
+				"https://www.svyaznoy.ru/catalog/phone/224/3808994",
+				"https://www.svyaznoy.ru/catalog/phone/224/3809021",
+				"https://www.svyaznoy.ru/catalog/phone/224/3809051",
 				"https://www.svyaznoy.ru/catalog/phone/224/3278474",
 				"https://www.svyaznoy.ru/catalog/phone/224/3279629",
 				"https://www.svyaznoy.ru/catalog/phone/224/3279635",
@@ -41,6 +53,12 @@
 			"attr": "value",
 			"color": "B0F59C",
 			"links": [
+				"",
+				"",
+				"http://moscow.shop.megafon.ru/mobile/100608.html",
+				"http://moscow.shop.megafon.ru/mobile/100624.html",
+				"http://moscow.shop.megafon.ru/mobile/100620.html",
+				"http://moscow.shop.megafon.ru/mobile/100617.html",
 				"http://moscow.shop.megafon.ru/mobile/93672.html",
 				"http://moscow.shop.megafon.ru/mobile/93683.html",
 				"http://moscow.shop.megafon.ru/mobile/93685.html",
@@ -61,6 +79,12 @@
 			"attr": "content",
 			"color": "FFDCBF",
 			"links": [
+				"",
+				"",
+				"https://www.dns-shop.ru/product/b35b724797583330",
+				"https://www.dns-shop.ru/product/b35b725097583330",
+				"https://www.dns-shop.ru/product/b35b725297583330",
+				"https://www.dns-shop.ru/product/b962105e97583330",
 				"https://www.dns-shop.ru/product/5e40b75a758b3330",
 				"https://www.dns-shop.ru/product/5e40b756758b3330",
 				"https://www.dns-shop.ru/product/5e40b75f758b3330",
@@ -81,6 +105,12 @@
 			"attr": "content",
 			"color": "FFBFC6",
 			"links": [
+				"http://www.mvideo.ru/products/30030163",
+				"http://www.mvideo.ru/products/30030165",
+				"http://www.mvideo.ru/products/30030153",
+				"http://www.mvideo.ru/products/30030156",
+				"http://www.mvideo.ru/products/30030159",
+				"http://www.mvideo.ru/products/30030162",
 				"http://www.mvideo.ru/products/30026135",
 				"http://www.mvideo.ru/products/30026139",
 				"http://www.mvideo.ru/products/30026214",
@@ -90,7 +120,7 @@
 				"http://www.mvideo.ru/products/30026285",
 				"http://www.mvideo.ru/products/30023520",
 				"http://www.mvideo.ru/products/30026289",
-				"http://www.mvideo.ru/products/30023534",
+				"",
 				"http://www.mvideo.ru/products/30027843",
 				"http://www.mvideo.ru/products/30027844"
 			]
