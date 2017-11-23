@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,240 +11,313 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/text/encoding/charmap"
-
 	"github.com/PuerkitoBio/goquery"
+	"github.com/briandowns/spinner"
 	"github.com/go-toast/toast"
 	"github.com/tealeg/xlsx"
+	"golang.org/x/text/encoding/charmap"
 )
 
-// Company struct
-type Company struct {
-	Title    string         `json:"title"`
-	Selector string         `json:"selector"`
-	Attr     string         `json:"attr"`
-	Color    string         `json:"color"`
-	Links    []string       `json:"links"`
-	Price    []int          `json:"price"`
-	Style    *xlsx.Style    `json:"-"`
-	Wg       sync.WaitGroup `json:"-"`
-}
-
-// Object model for json file
-type Object struct {
-	Companies []*Company     `json:"companies"`
-	Models    []string       `json:"models"`
-	Wg        sync.WaitGroup `json:"-"`
-}
-
-// Warning ...
-var Warning bool
-
-// Start ...
-func (o *Object) Start() {
-	o.Wg.Add(len(o.Companies))
-	for _, c := range o.Companies {
-		go func(c *Company) {
-			c.Parse(o.Models)
-			o.Wg.Done()
-		}(c)
+var (
+	models = []string{
+		"Apple iPhone X 64Gb",
+		"Apple iPhone X 256Gb",
+		"Apple iPhone 8 64Gb",
+		"Apple iPhone 8 256Gb",
+		"Apple iPhone 8 Plus 64Gb",
+		"Apple iPhone 8 Plus 256Gb",
+		"Apple iPhone 7 32Gb",
+		"Apple iPhone 7 128Gb",
+		"Apple iPhone 7 256Gb",
+		"Apple iPhone 7 Plus 32Gb",
+		"Apple iPhone 7 Plus 128Gb",
+		"Apple iPhone 7 Plus 256Gb",
+		"Apple iPhone 6s 32Gb",
+		"Apple iPhone 6s 128Gb",
+		"Apple iPhone 6s Plus 32Gb",
+		"Apple iPhone 6s Plus 128Gb",
+		"Apple iPhone SE 32Gb",
+		"Apple iPhone SE 128Gb",
+		"Apple AirPods",
+		"Apple TV 4 32Gb",
+		"Apple TV 4 64Gb",
+		"Apple TV 4K 32Gb",
+		"Apple TV 4K 64Gb",
+		"Apple iPad Pro 10.5 64Gb",
+		"Apple iPad Pro 10.5 256Gb",
+		"Apple iPad Pro 10.5 512Gb",
+		"Apple iPad Pro 10.5 Cellular 64Gb",
+		"Apple iPad Pro 10.5 Cellular 256Gb",
+		"Apple iPad Pro 10.5 Cellular 512Gb",
 	}
-	o.Wg.Wait()
-}
+	config      *string
+	wg          sync.WaitGroup
+	warningFlag bool
+	filePrice   = "./Цены.xlsx"
+	spin        = spinner.New(spinner.CharSets[40], 300*time.Millisecond)
+)
 
-// Parse ...
-func (c *Company) Parse(m []string) {
-	c.Wg.Add(len(c.Links))
-
-	for key, link := range c.Links {
-		go func(c *Company, link string, key int) {
-			repeats := 30
-			for {
-				if link != "" {
-					if repeats < 1 {
-						break
-					}
-					log.Println(c.Title, m[key], " - осталось попыток: ", repeats)
-					repeats--
-					if doc, err := goquery.NewDocument(link); err == nil {
-						if price := doc.Find(c.Selector).AttrOr(c.Attr, ""); price != "" {
-							c.Price[key], _ = strconv.Atoi(price)
-							fmt.Println(c.Title, m[key], price)
-							break
-						}
-					}
-				} else {
-					break
-				}
-			}
-			c.Wg.Done()
-		}(c, link, key)
-
+type (
+	company struct {
+		Title     string  `json:"title"`
+		Selector  string  `json:"selector"`
+		Attribute string  `json:"attribute"`
+		Color     string  `json:"color"`
+		Models    []model `json:"models"`
 	}
+	model struct {
+		Link  string `json:"link"`
+		Price int    `json:"-"`
+	}
+)
 
-	c.Wg.Wait()
+func init() {
+	flag.Parse()
+	config = flag.String("с", "./config.json", "Конфигурационный файл (по умолчанию: config.json)")
 }
 
 func main() {
 
-	var file *xlsx.File
-	var sheet *xlsx.Sheet
-	var row *xlsx.Row
-	var cell *xlsx.Cell
+	start := time.Now().UTC()
 
-	data, err := ioutil.ReadFile("config.json")
+	data, err := ioutil.ReadFile(*config)
 
 	if err != nil {
-		fmt.Println("Read file error: ", err)
-		return
+		log.Fatalln("Read file error: ", err)
 	}
 
-	var c Object
+	var companies = new([]*company)
 
-	if err = json.Unmarshal(data, &c); err != nil {
-		fmt.Println("Unmarshal error: ", err)
-		return
+	if err = json.Unmarshal(data, &companies); err != nil {
+		log.Fatalln("Unmarshal error: ", err)
 	}
 
-	for _, s := range c.Companies {
-		if len(s.Price) == 0 {
-			s.Price = make([]int, len(s.Links))
-		}
-		s.Style = &xlsx.Style{
-			Fill:      *xlsx.NewFill("solid", s.Color, ""),
-			Alignment: xlsx.Alignment{Horizontal: "center", Vertical: "center"},
-			Border:    *xlsx.NewBorder("thin", "thin", "thin", "thin"),
-		}
+	fmt.Println("Файл конфигурации успешно загружен")
+
+	wg.Add(len(*companies))
+
+	spin.Suffix = "  загружаю цены..."
+	// Запускаем спиннер
+	spin.Start()
+
+	// Загружаем цены наших компаний
+	for _, c := range *companies {
+		tm := make([]model, len(models), cap(models))
+		copy(tm, c.Models)
+		c.Models = tm
+		go process(c)
 	}
 
-	c.Start()
-
-	path := "./Цены.xlsx"
-
-	xlFile, err := xlsx.OpenFile(path)
-
-	if err != nil {
+	// Ожидаем завершения всех горутин
+	wg.Wait()
+	// Создаём новую таблицу
+	if err = makeNewSheet(*companies); err != nil {
 		log.Fatalln(err.Error())
-		return
+	}
+	// Уведовляем об окончании операции
+	notify()
+	// Останавливаем спиннер
+	spin.Stop()
+
+	fmt.Printf("Файл `%s` обновлён\n", filePrice)
+	fmt.Println("Времени потрачено: ", time.Since(start))
+}
+
+// process Загружает цены указанной компании
+func process(c *company) {
+	defer wg.Done()
+	for i := range c.Models {
+		if c.Models[i].Link != "" {
+			if doc, err := goquery.NewDocument(c.Models[i].Link); err == nil {
+				if price, ok := doc.Find(c.Selector).Attr(c.Attribute); ok {
+					c.Models[i].Price, _ = strconv.Atoi(price)
+					// fmt.Printf("%s - %s : %d\n", c.Title, models[i], model.Price)
+				} else {
+					fmt.Printf("! -> %s - %s - не найден нужный тег: %s %s, возможно, ссылка устарела\n", c.Title, models[i], c.Selector, c.Attribute)
+				}
+			}
+		}
+		// } else {
+		// 	fmt.Printf("! -> %s - Не задана ссылка для модели %s\n", c.Title, models[i])
+		// }
+	}
+}
+
+// makeNewSheet Создаёт новыую таблицу
+func makeNewSheet(c []*company) error {
+	var (
+		newFile *xlsx.File
+		sheet   *xlsx.Sheet
+		row     *xlsx.Row
+		cell    *xlsx.Cell
+	)
+
+	// Пытаемся открыть нашу таблицу (наличие файла обязательно!)
+	currentFile, err := xlsx.OpenFile(filePrice)
+
+	if err != nil {
+		return err
 	}
 
-	imarketPrice := Company{
-		Title: "iMarket",
-		Style: &xlsx.Style{
-			Fill:      *xlsx.NewFill("solid", "CEFF00", ""),
-			Alignment: xlsx.Alignment{Horizontal: "center", Vertical: "center"},
-			Border:    *xlsx.NewBorder("thin", "thin", "thin", "thin"),
-		},
-		Price: make([]int, len(c.Companies[0].Links)),
+	// Создаём экземляр нашей компании
+	imarketCompany := &company{
+		Title:  "iMarket",
+		Color:  "CEFF00",
+		Models: make([]model, len(models), cap(models)),
 	}
 
-	// magic
-	for _, sheet := range xlFile.Sheets {
+	// Заполняем срез цен нашей компании данными из таблицы
+	for _, sheet := range currentFile.Sheets {
 		for kr, row := range sheet.Rows {
+			// Ряд с названиями компаний нам не нужен, пропускаем его
 			if kr > 1 {
-				for kc, cell := range row.Cells {
-					if kc == 1 {
-						val, notInt := cell.Int()
-
-						if notInt != nil {
-							fmt.Println(notInt.Error())
-							return
-						}
-						imarketPrice.Price[kr-2] = val
-					}
+				// Нужная нам ячейка 2я слева
+				val, ok := row.Cells[1].Int()
+				// Запоминаем значение ячейки
+				if ok == nil {
+					imarketCompany.Models[kr-2].Price = val
 				}
 			}
 		}
 	}
 
-	file = xlsx.NewFile()
-	sheet, err = file.AddSheet("Цены")
+	// Создаём новую таблицу
+	newFile = xlsx.NewFile()
+	// Добавляем страницу
+	sheet, err = newFile.AddSheet("Цены")
 
 	if err != nil {
-		log.Fatalln(err.Error())
-		return
+		return err
 	}
 
+	// Устанавливаем ширину столбца для названий моделей
 	sheet.SetColWidth(0, 0, 30)
+	// Устанавливаем шрифт по умолчанию "Verdana" с размером 12
 	xlsx.SetDefaultFont(12, "Verdana")
 
+	// Переменная для выделенной рамки ячейки
 	border := *xlsx.NewBorder("thin", "thin", "thin", "thin")
+	// Переменная для расположения данных по центру яцейки
+	centred := xlsx.Alignment{Horizontal: "center", Vertical: "center"}
 
+	// Переенная для обозначения более низкой цены на конкретную модель
+	// относительно цены нашей компании (красный фон)
 	warning := &xlsx.Style{
 		Fill:      *xlsx.NewFill("solid", "FF0000", ""),
-		Alignment: xlsx.Alignment{Horizontal: "center", Vertical: "center"},
-		Border:    *xlsx.NewBorder("thin", "thin", "thin", "thin"),
+		Alignment: centred,
+		Border:    border,
 	}
 
+	// Добавляем ряд
 	row = sheet.AddRow()
+	// Устанавливаем высоту в 25 пунктов
 	row.SetHeight(25)
 
+	// Добавляем ячейку с текущей датой, центрируем и делаем её смежной
 	cell = row.AddCell()
-	cell.Merge(5, 0)
 	cell.SetValue("Актуально на: " + time.Now().Format("02-01-2006"))
 	cell.SetStyle(&xlsx.Style{
-		Alignment: xlsx.Alignment{Vertical: "center", Horizontal: "center"},
+		Alignment: centred,
+		Border:    border,
+	})
+	cell.Merge(len(c)+1, 0)
+
+	// Первый ряд - названия компаний
+	row = sheet.AddRow()
+	row.SetHeight(25)
+	cell = row.AddCell()
+	cell.SetStyle(&xlsx.Style{
+		Border: border,
+	})
+
+	// Заносим в ячейку название нашей компании
+	cell = row.AddCell()
+	cell.SetString(imarketCompany.Title)
+	cell.SetStyle(&xlsx.Style{
+		Fill:      *xlsx.NewFill("solid", imarketCompany.Color, ""),
+		Alignment: centred,
 		Border:    border,
 	})
 
-	for i := 0; i < len(c.Models); i++ {
+	// Заносим в ячейки названия других компаний
+	for _, v := range c {
+		cell = row.AddCell()
+		cell.SetString(v.Title)
+		cell.SetStyle(&xlsx.Style{
+			Fill:      *xlsx.NewFill("solid", v.Color, ""),
+			Alignment: centred,
+			Border:    border,
+		})
+	}
 
-		if i == 0 {
-			row = sheet.AddRow()
-			row.SetHeight(25)
-			cell = row.AddCell()
-			cell.SetStyle(&xlsx.Style{
-				Border: border,
-			})
-
-			cell = row.AddCell()
-			cell.SetString(imarketPrice.Title)
-			cell.SetStyle(imarketPrice.Style)
-
-			for _, v := range c.Companies {
-				cell = row.AddCell()
-				cell.SetString(v.Title)
-				cell.SetStyle(v.Style)
-			}
-		}
+	for i, model := range models {
+		// Записываем в ячейку названием модели
 		row = sheet.AddRow()
 		row.SetHeight(25)
 		cell = row.AddCell()
-		cell.SetString(c.Models[i])
+		cell.SetString(model)
 		cell.SetStyle(&xlsx.Style{
 			Font:      xlsx.Font{Bold: true},
 			Alignment: xlsx.Alignment{Vertical: "center"},
 			Border:    border,
 		})
 
+		// Записываем в ячейку цену на модель нашей компании
 		cell = row.AddCell()
-		cell.SetInt(imarketPrice.Price[i])
-		cell.SetStyle(imarketPrice.Style)
+		cell.SetInt(imarketCompany.Models[i].Price)
+		cell.SetStyle(&xlsx.Style{
+			Fill:      *xlsx.NewFill("solid", imarketCompany.Color, ""),
+			Alignment: centred,
+			Border:    border,
+		})
 
-		for _, v := range c.Companies {
+		// Записываем в ячейку цену на модель текущей компании
+		for _, v := range c {
+			// fmt.Println(v.Title, modelsNames[ii], v.Models[i].Price)
 			cell = row.AddCell()
-			cell.SetInt(v.Price[i])
-			cell.SetStyle(v.Style)
-			if v.Price[i] > 0 && imarketPrice.Price[i] > v.Price[i] {
-				Warning = true
+			cell.SetInt(v.Models[i].Price)
+			cell.SetStyle(&xlsx.Style{
+				Fill:      *xlsx.NewFill("solid", v.Color, ""),
+				Alignment: centred,
+				Border:    border,
+			})
+			// Проверям, является ли цена у конкурента меньше нашей
+			if v.Models[i].Price > 0 && imarketCompany.Models[i].Price >= v.Models[i].Price {
+				warningFlag = true
 				cell.SetStyle(warning)
 			} else {
-				cell.SetStyle(v.Style)
+				cell.SetStyle(&xlsx.Style{
+					Fill:      *xlsx.NewFill("solid", v.Color, ""),
+					Alignment: centred,
+					Border:    border,
+				})
 			}
 		}
 	}
 
-	file.Save(path)
+	// Заменяем таблицу новым файлом
+	if err = newFile.Save(filePrice); err != nil {
+		return err
+	}
 
-	println("All Done!")
+	return nil
+}
 
-	if Warning && runtime.GOOS == "windows" {
+// notify Выводит оповещение в ОС Windows
+func notify() {
+	if warningFlag && runtime.GOOS == "windows" {
 		b := charmap.Windows1251.NewEncoder()
-		title, err := b.Bytes([]byte("Граббер Цен"))
-		message, err := b.Bytes([]byte("Есть изменения!"))
+
+		title, err := b.Bytes([]byte("Цены конкурентов загружены!"))
 
 		if err != nil {
-			log.Fatalln(err.Error())
+			fmt.Println(err.Error())
+		}
+
+		message, err := b.Bytes([]byte("Имеются более низкие цены!"))
+
+		if err != nil {
+			fmt.Println(err.Error())
 		}
 
 		notification := toast.Notification{
@@ -255,11 +329,8 @@ func main() {
 			Duration:            toast.Long,
 		}
 
-		err = notification.Push()
-
-		if err != nil {
-			log.Fatalln(err.Error())
+		if err = notification.Push(); err != nil {
+			fmt.Println(err.Error())
 		}
 	}
-
 }
